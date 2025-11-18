@@ -1,34 +1,37 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import MainLayout from "./layout/MainLayout";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import TopServersBar from "./components/TopServersBar";
 import FriendsPage from "./pages/FriendsPage";
-import DirectMessagePage from "./pages/DirectMessagePage";
 import ServerPage from "./pages/ServerPage";
-import VoicePage from "./pages/VoicePage";
+import ChatPage from "./pages/ChatPage";
+
+import RegisterPage from "./pages/RegisterPage";
+import VerifyPage from "./pages/VerifyPage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          {/* главная – друзья */}
-          <Route index element={<FriendsPage />} />
+      <div className="flex flex-col h-screen">
+        <TopServersBar />
 
-          {/* вкладка Друзья */}
-          <Route path="friends" element={<FriendsPage />} />
+        <div className="flex-1 flex">
+          <Routes>
+            {/* --- АВТОРИЗАЦИЯ --- */}
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify" element={<VerifyPage />} />
+            <Route path="/login" element={<LoginPage />} />
 
-          {/* личные сообщения */}
-          <Route path="dm/:userId" element={<DirectMessagePage />} />
-
-          {/* сервер: каналы слева, чат, участники */}
-          <Route path="server/:serverId" element={<ServerPage />} />
-
-          {/* голосовой канал / звонок */}
-          <Route path="voice/:voiceId" element={<VoicePage />} />
-
-          {/* редирект на / */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+            {/* --- ОСНОВНЫЕ СТРАНИЦЫ --- */}
+            <Route path="/friends" element={<FriendsPage />} />
+            <Route path="/server/:serverId" element={<ServerPage />} />
+            <Route
+              path="/server/:serverId/channel/:channelId"
+              element={<ChatPage />}
+            />
+          </Routes>
+        </div>
+      </div>
     </BrowserRouter>
   );
 }

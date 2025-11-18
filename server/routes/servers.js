@@ -1,17 +1,16 @@
-const express = require('express');
-const { getUserServers, createServer, getServer, updateServer, deleteServer, joinServer, leaveServer } = require('../controllers/serverController');
-const { authenticateToken } = require('../middleware/auth');
-
+const express = require("express");
 const router = express.Router();
 
-router.use(authenticateToken);
+// ВРЕМЕННАЯ БАЗА (позже подключим MongoDB)
+const servers = [
+  { id: "1", name: "Геймдев", icon: "🎮" },
+  { id: "2", name: "Аниме", icon: "🌸" },
+  { id: "3", name: "Футбол", icon: "⚽" }
+];
 
-router.get('/', getUserServers);
-router.post('/', createServer);
-router.get('/:id', getServer);
-router.put('/:id', updateServer);
-router.delete('/:id', deleteServer);
-router.post('/:id/join', joinServer);
-router.post('/:id/leave', leaveServer);
+// GET /servers — список серверов
+router.get("/", (req, res) => {
+  res.json(servers);
+});
 
 module.exports = router;
