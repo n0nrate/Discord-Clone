@@ -1,132 +1,88 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../api/http";
-import { socket } from "../api/socket";
+import axios from "axios";
+import { io } from "socket.io-client";
 
 export default function ChatPage() {
   const { serverId, channelId } = useParams();
+
   const [messages, setMessages] = useState([]);
-  const [value, setValue] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [text, setText] = useState("");
+
+  const token = localStorage.getItem("token");
+  const socketRef = useRef(null);
   const bottomRef = useRef(null);
 
-  // загрузка истории сообщений
-  useEffect(() => {
-    if (!channelId) return;
-    setLoading(true);
-    api
-      .get(`/messages/${channelId}`)
-      .then((res) => setMessages(res.data))
-      .catch((err) => console.error("Ошибка загрузки сообщений", err))
-      .finally(() => setLoading(false));
-  }, [channelId]);
+  // Загружаем историю
+  async function loadMessages() {
+    const res = await axios.get(
+      `http://localhost:3001/messages/${channelId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setMessages(res.data);
+  }
 
-  // подключение к socket.io и подписка на новые сообщения
-  useEffect(() => {
-    if (!channelId) return;
+  // При отправке сообщения
+  function send() {
+    if (!text.trim()) return;
 
-    socket.connect();
-    socket.emit("join-channel", channelId);
-
-    const handleNewMessage = (msg) => {
-      if (msg.channelId === channelId) {
-        setMessages((prev) => [...prev, msg]);
-      }
-    };
-
-    socket.on("message:new", handleNewMessage);
-
-    return () => {
-      socket.off("message:new", handleNewMessage);
-      socket.emit("leave-channel", channelId);
-      socket.disconnect();
-    };
-  }, [channelId]);
-
-  // автоскролл вниз
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
-
-  const handleSend = () => {
-    const text = value.trim();
-    if (!text || !channelId) return;
-
-    // временно хардкодим имя
-    const user = JSON.parse(localStorage.getItem("user"));
-    const author = user?.username || "Unknown";
-    
-    socket.emit("message:send", {
+    const msg = {
       channelId,
       content: text,
-      author,
+      author: JSON.parse(localStorage.getItem("user")).username
+    };
+
+    socketRef.current.emit("message:send", msg);
+    setText("");
+  }
+
+  // Подключение сокета
+  useEffect(() => {
+    socketRef.current = io("http://localhost:3001");
+
+    socketRef.current.emit("join-channel", channelId);
+
+    socketRef.current.on("message:new", (msg) => {
+      setMessages((prev) => [...prev, msg]);
     });
 
-    setValue("");
-  };
+    loadMessages();
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+    return () => {
+      socketRef.current.emit("leave-channel", channelId);
+      socketRef.current.off("message:new");
+    };
+  }, [channelId]);
+
+  // автопрокрутка вниз
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
-    <div className="flex-1 flex flex-col bg-[#181818]">
-      {/* заголовок канала */}
-      <div className="h-12 bg-[#121212] border-b border-[#2a0000] flex items-center px-4 text-sm">
-        <span className="font-semibold text-white">Канал {channelId}</span>
-        <span className="text-[#777] ml-2 text-xs">сервер {serverId}</span>
-      </div>
+    <div className="flex flex-col h-full bg-[#1a1a1a] text-white p-4">
 
-      {/* сообщения */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {loading && (
-          <div className="text-xs text-[#888]">Загрузка сообщений…</div>
-        )}
-
+      {/* Сообщения */}
+      <div className="flex-1 overflow-y-auto">
         {messages.map((m) => (
-          <div key={m.id} className="flex gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#444]" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-white">
-                  {m.author}
-                </span>
-                <span className="text-[11px] text-[#777]">
-                  {m.createdAt &&
-                    new Date(m.createdAt).toLocaleTimeString("ru-RU", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                </span>
-              </div>
-              <div className="text-sm text-[#ddd]">{m.content}</div>
-            </div>
+          <div key={m.id} className="mb-3">
+            <b className="text-red-400">{m.author}</b>: {m.content}
           </div>
         ))}
-
-        {!loading && messages.length === 0 && (
-          <div className="text-xs text-[#888]">
-            Пока нет сообщений. Напиши что-нибудь первым.
-          </div>
-        )}
-
         <div ref={bottomRef} />
       </div>
 
-      {/* инпут */}
-      <div className="h-16 bg-[#101010] border-t border-[#2a0000] flex items-center px-4">
+      {/* Ввод */}
+      <div className="flex mt-4">
         <input
-          className="w-full bg-[#181818] border border-[#2a0000] rounded-md px-3 py-2 text-sm outline-none focus:border-[#ff0000] text-white"
-          placeholder="Написать сообщение..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
+          className="flex-1 p-2 bg-[#222] border border-red-700"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
         />
+        <button className="ml-2 p-2 bg-red-600" onClick={send}>
+          Отправить
+        </button>
       </div>
     </div>
   );

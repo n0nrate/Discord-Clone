@@ -9,26 +9,35 @@ import RegisterPage from "./pages/RegisterPage";
 import VerifyPage from "./pages/VerifyPage";
 import LoginPage from "./pages/LoginPage";
 
+import DMPage from "./pages/DMPage";
+import CreateServerPage from "./pages/CreateServerPage";
+import CreateChannelPage from "./pages/CreateChannelPage";
+
 function App() {
   return (
     <BrowserRouter>
       <div className="flex flex-col h-screen">
+
         <TopServersBar />
 
         <div className="flex-1 flex">
           <Routes>
-            {/* --- АВТОРИЗАЦИЯ --- */}
+
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify" element={<VerifyPage />} />
             <Route path="/login" element={<LoginPage />} />
-
-            {/* --- ОСНОВНЫЕ СТРАНИЦЫ --- */}
+            <Route path="/create-server" element={<CreateServerPage />} />
+            <Route path="/server/:serverId/create-channel" element={<CreateChannelPage />} />
+      
+            <Route path="/dm/:userId" element={<DMPage />} />
+           
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/server/:serverId" element={<ServerPage />} />
             <Route
               path="/server/:serverId/channel/:channelId"
               element={<ChatPage />}
             />
+
           </Routes>
         </div>
       </div>

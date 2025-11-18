@@ -16,10 +16,14 @@ app.use("/channels", channelsRoute);
 const { router: messagesRoute, createMessage } = require("./routes/messages");
 app.use("/messages", messagesRoute);
 
+app.use("/dm", require("./routes/dm"));
+
 const authRoute = require("./routes/auth");
 app.use(express.json());
 app.use("/auth", authRoute);
 
+const friendsRoute = require("./routes/friends");
+app.use("/friends", friendsRoute);
 
 app.get("/", (req, res) => {
   res.send("Discord backend работает!");
@@ -36,32 +40,45 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("Пользователь подключён:", socket.id);
 
-  // заход в комнату канала
+  // ===== КАНАЛЫ =====
   socket.on("join-channel", (channelId) => {
     socket.join(channelId);
     console.log(`socket ${socket.id} joined channel ${channelId}`);
   });
 
-  // выход из канала
   socket.on("leave-channel", (channelId) => {
     socket.leave(channelId);
     console.log(`socket ${socket.id} left channel ${channelId}`);
   });
 
-  // отправка сообщения
   socket.on("message:send", ({ channelId, content, author }) => {
     if (!content || !content.trim()) return;
 
     const msg = createMessage(channelId, { author, content });
-
-    // рассылаем всем в этом канале
     io.to(channelId).emit("message:new", msg);
+  });
+
+  // ===== DM (ЛИЧНЫЕ СООБЩЕНИЯ) =====
+
+  socket.on("join-dm", (userId) => {
+    socket.join(`dm-${userId}`);
+    console.log(`socket ${socket.id} joined DM room dm-${userId}`);
+  });
+
+  socket.on("dm:send", (msg) => {
+    // msg = { from, to, text, time }
+    io.to(`dm-${msg.to}`).emit("dm:receive", msg);
+    io.to(`dm-${msg.from}`).emit("dm:receive", msg);
   });
 
   socket.on("disconnect", () => {
     console.log("Пользователь отключён:", socket.id);
   });
 });
+
+  socket.on("disconnect", () => {
+    console.log("Пользователь отключён:", socket.id);
+  });
 
 
 const PORT = 3001;
