@@ -1,12 +1,19 @@
+// server/routes/auth.js
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const { createUser, findUserByEmail, markUserVerified } = require("../usersStore");
+
+const {
+  createUser,
+  findUserByEmail,
+  markUserVerified,
+} = require("../usersStore");
+
 const { sendVerificationEmail } = require("../mail");
 
 const router = express.Router();
 
-// СЕКРЕТ ДЛЯ JWT (пока хардкод, потом в .env)
+// СЕКРЕТ ДЛЯ JWT (потом вынесем в .env)
 const JWT_SECRET = "SUPER_SECRET_KEY_CHANGE_ME";
 
 // генерация 6-значного кода
@@ -20,25 +27,36 @@ router.post("/register", async (req, res) => {
     const { email, username, password } = req.body;
 
     if (!email || !username || !password) {
-      return res.status(400).json({ error: "Нужны email, username и password" });
+      return res
+        .status(400)
+        .json({ error: "Нужны email, username и password" });
     }
 
     const existing = findUserByEmail(email);
     if (existing) {
-      return res.status(400).json({ error: "Пользователь с таким email уже существует" });
+      return res
+        .status(400)
+        .json({ error: "Пользователь с таким email уже существует" });
     }
 
     const code = generateCode();
 
-    const user = await createUser({ email, username, password, verificationCode: code });
+    const user = await createUser({
+      email,
+      username,
+      password,
+      verificationCode: code,
+    });
 
-    // Пытаемся отправить письмо
     try {
       await sendVerificationEmail(email, code);
     } catch (err) {
       console.error("Ошибка отправки письма:", err);
-      // для отладки можно вернуть код в ответе (но в проде так нельзя)
-      return res.status(500).json({ error: "Не удалось отправить письмо", debugCode: code });
+      // для отладки можно вернуть код
+      return res.status(500).json({
+        error: "Не удалось отправить письмо",
+        debugCode: code,
+      });
     }
 
     res.status(201).json({
@@ -94,11 +112,7 @@ router.post("/login", async (req, res) => {
   if (!ok) return res.status(400).json({ error: "Неверный пароль" });
 
   const token = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-    },
+    { id: user.id, email: user.email, username: user.username },
     JWT_SECRET,
     { expiresIn: "7d" }
   );
