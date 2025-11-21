@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import CreateServerModal from "./modals/CreateServerModal";
-
 
 const HOME = { id: "home", name: "Главная", icon: "🏠", type: "home" };
 
@@ -72,33 +71,21 @@ export default function TopServersBar() {
         <button
           onClick={() => setShowCreate(true)}
           className="
-            w-10 h-10 flex items-center justify-center rounded-full
-            border-2 border-dashed border-[#ff0000]
+            w-12 h-12 flex items-center justify-center rounded-full
+            bg-[#151515] border-2 border-[#ff0000]
             text-xl text-[#ff0000]
             hover:bg-[#ff0000] hover:text-black transition
           "
-          title="Создать сервер"
         >
           +
-        </button>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="w-12 h-12 flex items-center justify-center rounded-full
-                   bg-[#151515] border-2 border-[#3a0000] hover:bg-[#ff0000]"
-          >
-             +
         </button>
       </div>
 
       <CreateServerModal
-        isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={(server) => {
-          // если хочешь, можешь тут обновлять локальный список серверов
-          console.log("Создан сервер:", server);
-  }}
-/>
-
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={handleCreated}
+      />
     </>
   );
 }
