@@ -14,7 +14,7 @@ export default function ServerSidebar() {
   const [channels, setChannels] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
-
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   const token = localStorage.getItem("token");
 
