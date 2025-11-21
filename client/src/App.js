@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import DMPage from "./pages/DMPage";
 import CreateServerPage from "./pages/CreateServerPage";
 import CreateChannelPage from "./pages/CreateChannelPage";
+import CreateServerPage from "./pages/CreateServerPage";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
            
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/server/:serverId" element={<ServerPage />} />
+            <Route path="/create-server" element={<CreateServerPage />} />
             <Route
               path="/server/:serverId/channel/:channelId"
               element={<ChatPage />}

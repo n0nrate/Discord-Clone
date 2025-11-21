@@ -19,6 +19,8 @@ app.use("/messages", messagesRoute);
 app.use("/dm", require("./routes/dm"));
 app.use("/auth", require("./routes/auth"));
 app.use("/friends", require("./routes/friends"));
+app.use("/invite", require("./routes/invites"));
+
 
 app.get("/", (req, res) => {
   res.send("Discord backend работает!");
@@ -53,6 +55,14 @@ io.on("connection", (socket) => {
     const msg = createMessage(channelId, { author, content });
     io.to(channelId).emit("message:new", msg);
   });
+
+  socket.on("typing", ({ channelId, author }) => {
+  socket.to(channelId).emit("typing", { author });
+});
+
+socket.on("stopTyping", ({ channelId }) => {
+  socket.to(channelId).emit("stopTyping");
+});
 
   // ====== DM ======
   socket.on("join-dm", (userId) => {

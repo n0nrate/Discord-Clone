@@ -62,17 +62,14 @@ export default function TopServersBar() {
         </button>
       ))}
 
-      {/* КНОПКА + Создать сервер */}
       <button
-        onClick={() => nav("/create-server")}
-        className="
-          w-12 h-12 flex items-center justify-center rounded-full
-          bg-[#111] border border-red-900 text-red-500 text-3xl
-          hover:bg-red-700 hover:text-white transition-all
-        "
-      >
-        +
-      </button>
+  onClick={() => nav("/create-server")}
+  className="w-12 h-12 flex items-center justify-center rounded-full 
+             text-3xl bg-[#151515] border-2 border-[#3a0000]
+             hover:bg-[#ff0000] hover:border-[#ff0000]"
+>
+  +
+</button>
 
     </div>
   );

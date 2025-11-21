@@ -1,41 +1,43 @@
+const fs = require("fs");
+const path = require("path");
 const bcrypt = require("bcrypt");
 
-const users = [];
+const FILE = path.join(__dirname, "data", "users.json");
 
-// создать пользователя (без верификации, с кодом)
-async function createUser({ email, username, password, verificationCode }) {
+function load() {
+  if (!fs.existsSync(FILE)) return [];
+  return JSON.parse(fs.readFileSync(FILE, "utf-8"));
+}
+
+function save(data) {
+  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
+
+let users = load();
+
+// Найти по username
+function findUserByUsername(username) {
+  return users.find((u) => u.username === username);
+}
+
+// Создать пользователя
+async function createUser({ username, password }) {
+  const id = String(Date.now());
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = {
-    id: String(users.length + 1),
-    email,
+    id,
     username,
     passwordHash,
-    verified: false,
-    verificationCode,
-    verificationExpires: Date.now() + 15 * 60 * 1000, // 15 минут
   };
 
   users.push(user);
+  save(users);
   return user;
 }
 
-function findUserByEmail(email) {
-  return users.find((u) => u.email === email);
-}
-
-function markUserVerified(email) {
-  const u = findUserByEmail(email);
-  if (!u) return null;
-  u.verified = true;
-  u.verificationCode = null;
-  u.verificationExpires = null;
-  return u;
-}
-
 module.exports = {
-  users,
+  findUserByUsername,
   createUser,
-  findUserByEmail,
-  markUserVerified,
+  getAll: () => users,
 };
