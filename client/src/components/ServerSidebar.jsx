@@ -30,6 +30,12 @@ export default function ServerSidebar() {
     load();
   }, [serverId]);
 
+if (c.type === "voice") {
+  nav(`/server/${serverId}/voice/${c.id}`)
+} else {
+  nav(`/server/${serverId}/channel/${c.id}`)
+}
+
   function isActive(channelId) {
     return loc.pathname.includes(`/channel/${channelId}`);
   }

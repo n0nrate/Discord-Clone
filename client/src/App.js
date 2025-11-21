@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import DMPage from "./pages/DMPage";
 import CreateServerPage from "./pages/CreateServerPage";
 import CreateChannelPage from "./pages/CreateChannelPage";
+import VoiceCallPage from "./pages/VoiceCallPage"; 
 
 function App() {
   return (
@@ -28,6 +29,8 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/create-server" element={<CreateServerPage />} />
             <Route path="/server/:serverId/create-channel" element={<CreateChannelPage />} />
+            <Route path="/server/:serverId/voice/:channelId" element={<VoiceCallPage />} />
+
       
             <Route path="/dm/:userId" element={<DMPage />} />
            
