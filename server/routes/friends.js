@@ -14,7 +14,7 @@ const { users } = require("../usersStore");
 
 const router = express.Router();
 
-// middleware: достаём userId из токена
+// ===== MIDDLEWARE: auth =====
 function auth(req, res, next) {
   const header = req.headers.authorization;
   if (!header) return res.status(401).json({ error: "Нет токена" });
@@ -30,7 +30,7 @@ function auth(req, res, next) {
   }
 }
 
-// отправка заявки
+// ===== ОТПРАВИТЬ ЗАЯВКУ =====
 router.post("/add", auth, (req, res) => {
   const from = req.user.id;
   const { toUserId } = req.body;
@@ -46,20 +46,20 @@ router.post("/add", auth, (req, res) => {
   }
 });
 
-// входящие заявки
+// ===== ВХОДЯЩИЕ ЗАЯВКИ =====
 router.get("/requests/incoming", auth, (req, res) => {
   res.json(getIncomingRequests(req.user.id));
 });
 
-// исходящие заявки
+// ===== ИСХОДЯЩИЕ ЗАЯВКИ =====
 router.get("/requests/outgoing", auth, (req, res) => {
   res.json(getOutgoingRequests(req.user.id));
 });
 
-// список друзей
+// ===== СПИСОК ДРУЗЕЙ =====
 router.get("/", auth, (req, res) => {
   const fr = getFriends(req.user.id).map(pair => {
-    const friendId = 
+    const friendId =
       pair.user1 === req.user.id ? pair.user2 : pair.user1;
 
     const user = users.find(u => u.id === friendId);
@@ -67,7 +67,6 @@ router.get("/", auth, (req, res) => {
     return {
       id: friendId,
       username: user.username,
-      email: user.email,
       since: pair.since
     };
   });
@@ -75,7 +74,7 @@ router.get("/", auth, (req, res) => {
   res.json(fr);
 });
 
-// принять заявку
+// ===== ПРИНЯТЬ ЗАЯВКУ =====
 router.post("/accept", auth, (req, res) => {
   const { requestId } = req.body;
 
@@ -87,7 +86,7 @@ router.post("/accept", auth, (req, res) => {
   }
 });
 
-// отклонить
+// ===== ОТКЛОНИТЬ ЗАЯВКУ =====
 router.post("/decline", auth, (req, res) => {
   const { requestId } = req.body;
   try {

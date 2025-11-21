@@ -12,7 +12,6 @@ import LoginPage from "./pages/LoginPage";
 import DMPage from "./pages/DMPage";
 import CreateServerPage from "./pages/CreateServerPage";
 import CreateChannelPage from "./pages/CreateChannelPage";
-import CreateServerPage from "./pages/CreateServerPage";
 
 function App() {
   return (

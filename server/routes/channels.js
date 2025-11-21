@@ -1,47 +1,49 @@
 const express = require("express");
-const router = express.Router();
 const fs = require("fs");
 const path = require("path");
+const { v4: uuid } = require("uuid");
 
-// путь к json хранения каналов
-const channelsPath = path.join(__dirname, "../data/channels.json");
+const router = express.Router();
 
-// загружаем
+const CHANNELS_PATH = path.join(__dirname, "..", "data", "channels.json");
+
 function loadChannels() {
-  if (!fs.existsSync(channelsPath)) return [];
-  return JSON.parse(fs.readFileSync(channelsPath));
+  if (!fs.existsSync(CHANNELS_PATH)) return [];
+  return JSON.parse(fs.readFileSync(CHANNELS_PATH, "utf8"));
 }
 
-// сохраняем
-function saveChannels(channels) {
-  fs.writeFileSync(channelsPath, JSON.stringify(channels, null, 2));
+function saveChannels(list) {
+  fs.writeFileSync(CHANNELS_PATH, JSON.stringify(list, null, 2));
 }
 
-// ============ АПИ ============
-
-// получить каналы сервера
+// ===== получить каналы сервера =====
 router.get("/:serverId", (req, res) => {
-  const channels = loadChannels().filter(c => c.serverId === req.params.serverId);
+  const { serverId } = req.params;
+  const channels = loadChannels().filter((c) => c.serverId === serverId);
   res.json(channels);
 });
 
-// создать канал
-router.post("/create", (req, res) => {
+// ===== создать канал =====
+router.post("/", (req, res) => {
   const { serverId, name, type } = req.body;
+
+  if (!serverId || !name || !type) {
+    return res.status(400).json({ error: "Неполные данные" });
+  }
 
   const channels = loadChannels();
 
-  const newChannel = {
-    id: Date.now().toString(),
+  const channel = {
+    id: uuid(),
     serverId,
     name,
-    type, // "text" или "voice"
+    type,
   };
 
-  channels.push(newChannel);
+  channels.push(channel);
   saveChannels(channels);
 
-  res.json(newChannel);
+  res.status(201).json(channel);
 });
 
 module.exports = router;

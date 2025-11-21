@@ -1,58 +1,85 @@
+// server/routes/servers.js
 const express = require("express");
-const jwt = require("jsonwebtoken");
-
-const {
-  createServer,
-  getServersByUser,
-  getServer,
-  getChannels,
-} = require("../serversStore");
+const { v4: uuid } = require("uuid");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-const JWT_SECRET = "SUPER_SECRET_KEY_CHANGE_ME";
+const serversPath = path.join(__dirname, "../data/servers.json");
+const channelsPath = path.join(__dirname, "../data/channels.json");
 
-// middleware для проверки токена
-function auth(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ error: "Нет токена" });
-
+// безопасное чтение json
+function readJSON(p) {
   try {
-    const data = jwt.verify(token, JWT_SECRET);
-    req.user = data;
-    next();
+    const raw = fs.readFileSync(p, "utf8");
+    return raw.trim() ? JSON.parse(raw) : [];
   } catch {
-    return res.status(401).json({ error: "Неверный токен" });
+    return [];
   }
 }
 
-// Получить свои серверы
-router.get("/", auth, (req, res) => {
-  res.json(getServersByUser(req.user.id));
+function writeJSON(p, data) {
+  fs.writeFileSync(p, JSON.stringify(data, null, 2), "utf8");
+}
+
+// GET /servers — список серверов (пока без фильтра по пользователю)
+router.get("/", (req, res) => {
+  const servers = readJSON(serversPath);
+  res.json(servers);
 });
 
-// Создать сервер
-router.post("/", auth, (req, res) => {
-  const { name } = req.body;
+// POST /servers — создать новый сервер
+router.post("/", (req, res) => {
+  const { name, template, ownerId } = req.body;
+
   if (!name || !name.trim()) {
-    return res.status(400).json({ error: "Введите имя сервера" });
+    return res.status(400).json({ error: "Нужно имя сервера" });
   }
 
-  const result = createServer(req.user.id, name);
-  res.status(201).json(result);
-});
+  const servers = readJSON(serversPath);
+  const channels = readJSON(channelsPath);
 
-// Получить данные сервера
-router.get("/:id", auth, (req, res) => {
-  const server = getServer(req.params.id);
-  if (!server) return res.status(404).json({ error: "Сервер не найден" });
+  const serverId = uuid();
 
-  res.json(server);
-});
+  // создаём дефолтные каналы
+  const textChannelId = uuid();
+  const voiceChannelId = uuid();
 
-// Каналы сервера
-router.get("/:id/channels", auth, (req, res) => {
-  res.json(getChannels(req.params.id));
+  const newServer = {
+    id: serverId,
+    name: name.trim(),
+    template: template || "friends",
+    ownerId: ownerId || null,
+    icon: null, // потом добавим
+    mainTextChannelId: textChannelId,
+    mainVoiceChannelId: voiceChannelId,
+    createdAt: new Date().toISOString(),
+  };
+
+  const textChannel = {
+    id: textChannelId,
+    serverId,
+    name: "основной",
+    type: "text",
+    createdAt: new Date().toISOString(),
+  };
+
+  const voiceChannel = {
+    id: voiceChannelId,
+    serverId,
+    name: "Основной",
+    type: "voice",
+    createdAt: new Date().toISOString(),
+  };
+
+  servers.push(newServer);
+  channels.push(textChannel, voiceChannel);
+
+  writeJSON(serversPath, servers);
+  writeJSON(channelsPath, channels);
+
+  res.status(201).json(newServer);
 });
 
 module.exports = router;

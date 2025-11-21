@@ -20,7 +20,7 @@ app.use("/dm", require("./routes/dm"));
 app.use("/auth", require("./routes/auth"));
 app.use("/friends", require("./routes/friends"));
 app.use("/invite", require("./routes/invites"));
-
+app.use("/servers", require("./routes/invite"));
 
 app.get("/", (req, res) => {
   res.send("Discord backend работает!");

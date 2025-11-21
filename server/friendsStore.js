@@ -1,72 +1,69 @@
-const friends = [];
-const friendRequests = [];
+const fs = require("fs");
+const path = require("path");
+const { v4: uuid } = require("uuid");
 
-// отправка заявки
-function sendFriendRequest(fromUserId, toUserId) {
-  // проверка: уже друзья?
-  if (friends.find(f =>
-    (f.user1 === fromUserId && f.user2 === toUserId) ||
-    (f.user2 === fromUserId && f.user1 === toUserId)
-  )) {
-    throw new Error("Вы уже друзья");
-  }
+const FILE = path.join(__dirname, "data", "friends.json");
 
-  // проверка: заявка уже существует?
-  if (friendRequests.find(r =>
-    r.from === fromUserId && r.to === toUserId
-  )) {
+function load() {
+  if (!fs.existsSync(FILE)) return { requests: [], friends: [] };
+  return JSON.parse(fs.readFileSync(FILE, "utf8"));
+}
+
+function save(data) {
+  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
+
+let data = load();
+
+function sendFriendRequest(from, to) {
+  if (from === to) throw new Error("Нельзя добавить самого себя");
+
+  // Проверка на существующую заявку
+  if (data.requests.find(r => r.from === from && r.to === to))
     throw new Error("Заявка уже отправлена");
-  }
 
-  // создание заявки
   const request = {
-    id: String(friendRequests.length + 1),
-    from: fromUserId,
-    to: toUserId,
-    createdAt: Date.now()
+    id: uuid(),
+    from,
+    to,
+    createdAt: new Date().toISOString(),
   };
 
-  friendRequests.push(request);
+  data.requests.push(request);
+  save(data);
   return request;
 }
 
-// входящие заявки
 function getIncomingRequests(userId) {
-  return friendRequests.filter(r => r.to === userId);
+  return data.requests.filter(r => r.to === userId);
 }
 
-// исходящие заявки
 function getOutgoingRequests(userId) {
-  return friendRequests.filter(r => r.from === userId);
+  return data.requests.filter(r => r.from === userId);
 }
 
-// друзья
 function getFriends(userId) {
-  return friends.filter(f => f.user1 === userId || f.user2 === userId);
+  return data.friends.filter(f => f.user1 === userId || f.user2 === userId);
 }
 
-// принятие заявки
 function acceptFriendRequest(requestId) {
-  const reqIndex = friendRequests.findIndex(r => r.id === requestId);
-  if (reqIndex === -1) throw new Error("Запрос не найден");
+  const req = data.requests.find(r => r.id === requestId);
+  if (!req) throw new Error("Заявка не найдена");
 
-  const req = friendRequests[reqIndex];
+  data.requests = data.requests.filter(r => r.id !== requestId);
 
-  friends.push({
+  data.friends.push({
     user1: req.from,
     user2: req.to,
-    since: Date.now()
+    since: new Date().toISOString(),
   });
 
-  friendRequests.splice(reqIndex, 1);
+  save(data);
 }
 
-// отклонение
 function declineFriendRequest(requestId) {
-  const reqIndex = friendRequests.findIndex(r => r.id === requestId);
-  if (reqIndex === -1) throw new Error("Запрос не найден");
-
-  friendRequests.splice(reqIndex, 1);
+  data.requests = data.requests.filter(r => r.id !== requestId);
+  save(data);
 }
 
 module.exports = {
