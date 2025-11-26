@@ -1,14 +1,20 @@
 import { useState } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
+import { api } from "../../api/http";
 
-export default function CreateChannelModal({ isOpen, onClose, onCreated }) {
-  const { serverId } = useParams();
+export default function CreateChannelModal({
+  isOpen,
+  onClose,
+  onCreated,
+  categories = [],
+  defaultCategoryId = null,
+}) {
+  const { serverId: routeServerId } = useParams();
+  const serverId = routeServerId;
   const [name, setName] = useState("");
   const [type, setType] = useState("text");
+  const [categoryId, setCategoryId] = useState(defaultCategoryId);
   const [loading, setLoading] = useState(false);
-
-  const token = localStorage.getItem("token");
 
   if (!isOpen) return null;
 
@@ -19,17 +25,12 @@ export default function CreateChannelModal({ isOpen, onClose, onCreated }) {
     try {
       setLoading(true);
 
-      await axios.post(
-        "http://localhost:3001/channels",
-        {
-          serverId,
-          name,
-          type,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await api.post("/channels", {
+        serverId,
+        name,
+        type,
+        categoryId,
+      });
 
       onCreated && onCreated();
       onClose();
@@ -63,6 +64,21 @@ export default function CreateChannelModal({ isOpen, onClose, onCreated }) {
           >
             <option value="text">Текстовый</option>
             <option value="voice">Голосовой</option>
+          </select>
+
+          <select
+            className="w-full p-2 bg-[#222] border border-red-700 mb-3"
+            value={categoryId || ""}
+            onChange={(e) =>
+              setCategoryId(e.target.value ? e.target.value : null)
+            }
+          >
+            <option value="">Без категории</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
           </select>
 
           <button

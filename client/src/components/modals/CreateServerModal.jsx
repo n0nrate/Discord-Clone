@@ -1,7 +1,7 @@
 // client/src/components/modals/CreateServerModal.jsx
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../api/http";
 
 const TEMPLATES = [
   {
@@ -54,17 +54,11 @@ export default function CreateServerModal({ isOpen, onClose, onCreated }) {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:3001/servers",
-        {
-          name: name.trim(),
-          template,
-          ownerId: me.id,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.post("/servers", {
+        name: name.trim(),
+        template,
+        ownerId: me.id,
+      });
 
       const server = res.data;
       onCreated && onCreated(server);

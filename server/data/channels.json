@@ -3,12 +3,43 @@
     "id": "7d122d82-88c1-4d69-b9d5-852366674336",
     "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
     "name": "основной",
-    "type": "text"
+    "type": "text",
+    "position": 2
   },
   {
     "id": "d6b1e871-793f-41c0-8190-228421ad3a4a",
     "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
     "name": "Основной войс",
     "type": "voice"
+  },
+  {
+    "id": "fe3e2c9d-dfd3-4bbf-bb56-9d4d56e99ad3",
+    "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
+    "name": "1111",
+    "type": "text",
+    "categoryId": null,
+    "position": 0
+  },
+  {
+    "id": "67e8eb1e-00cf-4379-8838-68726e321ec5",
+    "serverId": "d9496a12-195a-43e5-bdf6-d668c8cf0525",
+    "name": "основной",
+    "type": "text",
+    "createdAt": "2025-11-26T19:12:35.469Z"
+  },
+  {
+    "id": "2ad8e9c8-10ea-4760-83ab-d5f8268fb826",
+    "serverId": "d9496a12-195a-43e5-bdf6-d668c8cf0525",
+    "name": "Основной",
+    "type": "voice",
+    "createdAt": "2025-11-26T19:12:35.469Z"
+  },
+  {
+    "id": "ca8fcd8e-473d-479f-8ce6-f7efa700dee2",
+    "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
+    "name": "пис.н",
+    "type": "voice",
+    "categoryId": "87d15a4e-802c-4fb8-97a8-45f728b7bf62",
+    "position": 3
   }
 ]

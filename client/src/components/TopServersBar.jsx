@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import { api } from "../api/http";
 
 import CreateServerModal from "./modals/CreateServerModal";
 
@@ -22,7 +22,7 @@ export default function TopServersBar() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await axios.get("http://localhost:3001/servers");
+        const res = await api.get("/servers");
         setServers(res.data || []);
       } catch (e) {
         console.error("Ошибка загрузки серверов", e);

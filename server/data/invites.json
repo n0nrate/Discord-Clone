@@ -1,0 +1,29 @@
+{
+  "6bc1019d": {
+    "code": "6bc1019d",
+    "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
+    "creatorId": "1764180735361",
+    "createdAt": 1764180941642,
+    "expires": 1764785741642,
+    "maxUses": 0,
+    "uses": 0
+  },
+  "a9141a43": {
+    "code": "a9141a43",
+    "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
+    "creatorId": "1764180735361",
+    "createdAt": 1764181169590,
+    "expires": 1764785969590,
+    "maxUses": 0,
+    "uses": 0
+  },
+  "4fa146ce": {
+    "code": "4fa146ce",
+    "serverId": "78dab2d0-2248-4dd6-80ff-83849b6ef027",
+    "creatorId": "1764180735361",
+    "createdAt": 1764191955477,
+    "expires": 1764796755477,
+    "maxUses": 0,
+    "uses": 0
+  }
+}

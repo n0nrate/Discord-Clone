@@ -1,20 +1,14 @@
 import { useState } from "react";
-import axios from "axios";
 import { useParams } from "react-router-dom";
+import { api } from "../api/http";
 
 export default function CreateChannelPage() {
   const { serverId } = useParams();
   const [name, setName] = useState("");
   const [type, setType] = useState("text");
 
-  const token = localStorage.getItem("token");
-
   async function create() {
-    await axios.post(
-      "http://localhost:3001/channels/create",
-      { serverId, name, type },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await api.post("/channels", { serverId, name, type });
     window.location.href = `/server/${serverId}`;
   }
 

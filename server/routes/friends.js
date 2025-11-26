@@ -7,93 +7,173 @@ const {
   getOutgoingRequests,
   getFriends,
   acceptFriendRequest,
-  declineFriendRequest
+  declineFriendRequest,
 } = require("../friendsStore");
 
-const { users } = require("../usersStore");
+const usersStore = require("../usersStore");
 
 const router = express.Router();
 
-// ===== MIDDLEWARE: auth =====
+const JWT_SECRET = "SUPER_SECRET_KEY_CHANGE_ME";
+
+function resolveUserByEmailOrUsername(identifier) {
+  const allUsers = usersStore.getAll ? usersStore.getAll() : [];
+  return allUsers.find(
+    (u) => u.email === identifier || u.username === identifier
+  );
+}
+
 function auth(req, res, next) {
   const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ error: "Нет токена" });
+  if (!header) {
+    return res.status(401).json({ error: "Нет токена" });
+  }
 
-  const token = header.split(" ")[1];
+  const parts = header.split(" ");
+  if (parts.length !== 2) {
+    return res.status(401).json({ error: "Неверный формат токена" });
+  }
 
   try {
-    const decoded = jwt.verify(token, "SUPER_SECRET_KEY_CHANGE_ME");
-    req.user = decoded;
+    const token = parts[1];
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
     next();
-  } catch {
+  } catch (err) {
+    console.error("JWT error in /friends:", err);
     return res.status(401).json({ error: "Неверный токен" });
   }
 }
 
-// ===== ОТПРАВИТЬ ЗАЯВКУ =====
-router.post("/add", auth, (req, res) => {
-  const from = req.user.id;
-  const { toUserId } = req.body;
+// GET /friends/list
+// Возвращает:
+// {
+//   friends: [{ id, username, email?, avatar?, statusText? }],
+//   requests: [{ id, userId, username, email?, createdAt }]
+// }
+function buildFriendsPayload(userId) {
+  const allUsers = usersStore.getAll ? usersStore.getAll() : [];
 
-  if (!users.find(u => u.id === toUserId))
+  // Друзья
+  const friendIds = getFriends(userId);
+  const friends = friendIds
+    .map((id) => allUsers.find((u) => u.id === id))
+    .filter(Boolean)
+    .map((u) => ({
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      avatar: u.avatar,
+      statusText: u.statusText,
+      status: u.status || "online",
+    }));
+
+  // Входящие заявки (для вкладки "Ожидание")
+  const incoming = getIncomingRequests(userId);
+  const requests = incoming
+    .map((r) => {
+      const fromUser = allUsers.find((u) => u.id === r.fromId);
+      if (!fromUser) return null;
+
+      return {
+        id: r.id,
+        userId: fromUser.id,
+        username: fromUser.username,
+        email: fromUser.email,
+        createdAt: r.createdAt,
+      };
+    })
+    .filter(Boolean);
+
+  return { friends, requests };
+}
+
+router.get("/list", auth, (req, res) => {
+  res.json(buildFriendsPayload(req.user.id));
+});
+
+// Совместимость: GET /friends/
+router.get("/", auth, (req, res) => {
+  res.json(buildFriendsPayload(req.user.id));
+});
+
+// POST /friends/request
+// Body: { email } (можно передавать и username)
+router.post("/request", auth, (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Не передан email / username" });
+  }
+
+  const target = resolveUserByEmailOrUsername(email);
+
+  if (!target) {
     return res.status(404).json({ error: "Пользователь не найден" });
+  }
 
   try {
-    const request = sendFriendRequest(from, toUserId);
-    res.json(request);
+    const request = sendFriendRequest(req.user.id, target.id);
+    return res.status(201).json({
+      ok: true,
+      requestId: request.id,
+    });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 });
 
-// ===== ВХОДЯЩИЕ ЗАЯВКИ =====
-router.get("/requests/incoming", auth, (req, res) => {
-  res.json(getIncomingRequests(req.user.id));
+// Совместимость: POST /friends/add { email }
+router.post("/add", auth, (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: "Не передан email / username" });
+  }
+
+  const target = resolveUserByEmailOrUsername(email);
+  if (!target) {
+    return res.status(404).json({ error: "Пользователь не найден" });
+  }
+
+  try {
+    const request = sendFriendRequest(req.user.id, target.id);
+    return res.status(201).json({ ok: true, requestId: request.id });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 });
 
-// ===== ИСХОДЯЩИЕ ЗАЯВКИ =====
-router.get("/requests/outgoing", auth, (req, res) => {
-  res.json(getOutgoingRequests(req.user.id));
-});
-
-// ===== СПИСОК ДРУЗЕЙ =====
-router.get("/", auth, (req, res) => {
-  const fr = getFriends(req.user.id).map(pair => {
-    const friendId =
-      pair.user1 === req.user.id ? pair.user2 : pair.user1;
-
-    const user = users.find(u => u.id === friendId);
-
-    return {
-      id: friendId,
-      username: user.username,
-      since: pair.since
-    };
-  });
-
-  res.json(fr);
-});
-
-// ===== ПРИНЯТЬ ЗАЯВКУ =====
+// POST /friends/accept
+// Body: { requestId }
 router.post("/accept", auth, (req, res) => {
   const { requestId } = req.body;
 
+  if (!requestId) {
+    return res.status(400).json({ error: "Не передан requestId" });
+  }
+
   try {
-    acceptFriendRequest(requestId);
-    res.json({ ok: true });
+    const request = acceptFriendRequest(requestId, req.user.id);
+    return res.json({ ok: true, requestId: request.id });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 });
 
-// ===== ОТКЛОНИТЬ ЗАЯВКУ =====
+// POST /friends/decline
+// Body: { requestId }
 router.post("/decline", auth, (req, res) => {
   const { requestId } = req.body;
+
+  if (!requestId) {
+    return res.status(400).json({ error: "Не передан requestId" });
+  }
+
   try {
-    declineFriendRequest(requestId);
-    res.json({ ok: true });
+    declineFriendRequest(requestId, req.user.id);
+    return res.json({ ok: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 });
 

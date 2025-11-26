@@ -5,5 +5,15 @@
     "ownerId": null,
     "members": [],
     "createdAt": "2025-11-21T16:05:12.802Z"
+  },
+  {
+    "id": "d9496a12-195a-43e5-bdf6-d668c8cf0525",
+    "name": "11111",
+    "template": "friends",
+    "ownerId": "1764180735361",
+    "icon": null,
+    "mainTextChannelId": "67e8eb1e-00cf-4379-8838-68726e321ec5",
+    "mainVoiceChannelId": "2ad8e9c8-10ea-4760-83ab-d5f8268fb826",
+    "createdAt": "2025-11-26T19:12:35.469Z"
   }
 ]

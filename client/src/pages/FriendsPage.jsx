@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "../api/http";
 import DMList from "../components/DMList";
 import ActivitySidebar from "../components/ActivitySidebar";
 
@@ -7,7 +7,7 @@ export default function FriendsPage() {
   const [tab, setTab] = useState("online");
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
-  const [emailToAdd, setEmailToAdd] = useState("");
+  const [friendIdentifier, setFriendIdentifier] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -16,30 +16,20 @@ export default function FriendsPage() {
   }, [tab]);
 
   async function loadFriends() {
-    const res = await axios.get(
-      "http://localhost:3001/friends/list",
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const res = await api.get("/friends/list");
     setFriends(res.data.friends);
     setRequests(res.data.requests);
   }
 
   async function sendRequest() {
-    await axios.post(
-      "http://localhost:3001/friends/request",
-      { email: emailToAdd },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setEmailToAdd("");
+    if (!friendIdentifier.trim()) return;
+    await api.post("/friends/request", { email: friendIdentifier });
+    setFriendIdentifier("");
     loadFriends();
   }
 
   async function accept(id) {
-    await axios.post(
-      "http://localhost:3001/friends/accept",
-      { userId: id },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await api.post("/friends/accept", { requestId: id });
     loadFriends();
   }
 
@@ -63,14 +53,14 @@ export default function FriendsPage() {
         </div>
 
         {tab === "add" && (
-          <div>
+          <div className="flex items-center gap-2">
             <input
-              className="p-2 bg-[#222] border border-red-900 rounded"
-              placeholder="Email друга"
-              value={emailToAdd}
-              onChange={e => setEmailToAdd(e.target.value)}
+              className="flex-1 p-2 bg-[#222] border border-red-900 rounded"
+              placeholder="Ник друга"
+              value={friendIdentifier}
+              onChange={e => setFriendIdentifier(e.target.value)}
             />
-            <button onClick={sendRequest} className="ml-2 p-2 bg-red-600">Отправить</button>
+            <button onClick={sendRequest} className="p-2 bg-red-600 rounded">Отправить</button>
           </div>
         )}
 

@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
-import { io } from "socket.io-client";
+import { api } from "../api/http";
+import { createSocket } from "../api/socket";
 
 export default function DMPage() {
   const { userId } = useParams();
   const token = localStorage.getItem("token");
 
-  const socket = io("http://localhost:3001");
+  const socketRef = useRef(null);
 
   const me = JSON.parse(localStorage.getItem("user")).id;
 
@@ -15,9 +15,7 @@ export default function DMPage() {
   const [text, setText] = useState("");
 
   async function load() {
-    const res = await axios.get(`http://localhost:3001/dm/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const res = await api.get(`/dm/${userId}`);
     setMessages(res.data);
   }
 
@@ -29,7 +27,7 @@ export default function DMPage() {
       time: new Date().toISOString()
     };
 
-    socket.emit("dm:send", msg);
+    socketRef.current.emit("dm:send", msg);
 
     setMessages(prev => [...prev, msg]);
 
@@ -41,16 +39,20 @@ export default function DMPage() {
   }, [userId]);
 
   useEffect(() => {
-    socket.emit("join-dm", me);
+    socketRef.current = createSocket({ autoConnect: true });
+    socketRef.current.emit("join-dm", me);
 
-    socket.on("dm:receive", (msg) => {
+    socketRef.current.on("dm:receive", (msg) => {
       setMessages(prev => [...prev, msg]);
     });
 
     return () => {
-      socket.off("dm:receive");
+      if (socketRef.current) {
+        socketRef.current.off("dm:receive");
+        socketRef.current.disconnect();
+      }
     };
-  }, [userId]);
+  }, [userId, me]);
 
   return (
     <div className="flex flex-col h-full p-4 bg-[#1a1a1a] text-white">

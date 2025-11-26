@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
 import SimplePeer from "simple-peer";
+import { createSocket } from "../api/socket";
 
-const socket = io("http://localhost:3001", { autoConnect: false });
+const socket = createSocket();
 
 export default function VoiceChannel({ channelId, me }) {
   const [users, setUsers] = useState([]);
@@ -101,10 +101,10 @@ export default function VoiceChannel({ channelId, me }) {
     attachVolumeMeter(stream, me.id);
 
     // создаём peer-коннекты
-    users.forEach((id) => {
-      if (id === me.id) return;
-      const peer = createPeer(true, id, stream);
-      peersRef.current[id] = peer;
+    users.forEach((u) => {
+      if (u.id === me.id) return;
+      const peer = createPeer(true, u.id, stream);
+      peersRef.current[u.id] = peer;
     });
   }
 
@@ -158,16 +158,22 @@ export default function VoiceChannel({ channelId, me }) {
 }
 
   function toggleDeaf() {
-    setDeaf((d) => !d);
-    const enabled = !deaf;
-    Object.values(streamsRef.current).forEach((remoteStream) => {
-      remoteStream.getAudioTracks().forEach((t) => (t.enabled = enabled));
+    setDeaf((prev) => {
+      const newDeaf = !prev;
+      const enabled = !newDeaf;
+
+      Object.values(streamsRef.current).forEach((remoteStream) => {
+        remoteStream.getAudioTracks().forEach((t) => (t.enabled = enabled));
+      });
+
       socket.emit("voice:state", {
         channelId,
         userId: me.id,
         muted,
-        deaf: newDeaf, 
+        deaf: newDeaf,
       });
+
+      return newDeaf;
     });
   }
 
@@ -176,7 +182,11 @@ export default function VoiceChannel({ channelId, me }) {
     Object.values(peersRef.current).forEach((p) => p.destroy());
     peersRef.current = {};
     streamsRef.current = {};
-    localStreamRef.current.getTracks().forEach((t) => t.stop());
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+    }
+    setUsers((prev) => prev.filter((u) => u.id !== me.id));
     setConnected(false);
   }
 

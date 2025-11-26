@@ -1,19 +1,13 @@
-import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../api/http";
 
 export default function CreateServerPage() {
   const [name, setName] = useState("");
   const nav = useNavigate();
 
   async function create() {
-    const token = localStorage.getItem("token");
-
-    const res = await axios.post(
-      "http://localhost:3001/servers",
-      { name },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const res = await api.post("/servers", { name });
 
     nav(`/server/${res.data.server.id}`);
   }

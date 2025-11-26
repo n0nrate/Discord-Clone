@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import TopServersBar from "./components/TopServersBar";
 
@@ -10,11 +11,27 @@ import DMPage from "./pages/DMPage";
 import RegisterPage from "./pages/RegisterPage";
 import VerifyPage from "./pages/VerifyPage";
 import LoginPage from "./pages/LoginPage";
+import InvitePage from "./pages/InvitePage";
 
 // ВОТ ЭТОГО И НЕ ХВАТАЛО
 import VoiceCallPage from "./pages/VoiceCallPage";
 
 function App() {
+  const [hasToken, setHasToken] = useState(!!localStorage.getItem("token"));
+
+  useEffect(() => {
+    const sync = () => setHasToken(!!localStorage.getItem("token"));
+    window.addEventListener("storage", sync);
+    window.addEventListener("token-changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("token-changed", sync);
+    };
+  }, []);
+
+  const protectedRoute = (element) =>
+    hasToken ? element : <LoginPage />;
+
   return (
     <BrowserRouter>
       <div className="flex flex-col h-screen bg-black">
@@ -30,24 +47,25 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
 
             {/* --- друзья и лс --- */}
-            <Route path="/friends" element={<FriendsPage />} />
-            <Route path="/dm/:userId" element={<DMPage />} />
+            <Route path="/friends" element={protectedRoute(<FriendsPage />)} />
+            <Route path="/dm/:userId" element={protectedRoute(<DMPage />)} />
+            <Route path="/invite/:code" element={protectedRoute(<InvitePage />)} />
 
             {/* --- сервера и каналы --- */}
-            <Route path="/server/:serverId" element={<ServerPage />} />
+            <Route path="/server/:serverId" element={protectedRoute(<ServerPage />)} />
             <Route
               path="/server/:serverId/channel/:channelId"
-              element={<ChatPage />}
+              element={protectedRoute(<ChatPage />)}
             />
 
             {/* голосовой звонок / экранка для голосового канала */}
             <Route
               path="/server/:serverId/voice/:channelId"
-              element={<VoiceCallPage />}
+              element={protectedRoute(<VoiceCallPage />)}
             />
 
             {/* дефолт – кидаем на друзей */}
-            <Route path="*" element={<FriendsPage />} />
+            <Route path="*" element={protectedRoute(<FriendsPage />)} />
           </Routes>
         </div>
       </div>

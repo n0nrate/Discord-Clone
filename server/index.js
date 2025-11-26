@@ -12,6 +12,7 @@ app.use(express.json());
 // ====== ROUTES ======
 app.use("/servers", require("./routes/servers"));
 app.use("/channels", require("./routes/channels"));
+app.use("/categories", require("./routes/categories"));
 
 const { router: messagesRoute, createMessage } = require("./routes/messages");
 app.use("/messages", messagesRoute);
@@ -19,8 +20,7 @@ app.use("/messages", messagesRoute);
 app.use("/dm", require("./routes/dm"));
 app.use("/auth", require("./routes/auth"));
 app.use("/friends", require("./routes/friends"));
-app.use("/invite", require("./routes/invites"));
-app.use("/servers", require("./routes/invite"));
+app.use("/invites", require("./routes/invite"));
 
 app.get("/", (req, res) => {
   res.send("Discord backend работает!");
@@ -80,7 +80,13 @@ socket.on("stopTyping", ({ channelId }) => {
       voiceUsersByChannel[channelId] = {};
     }
 
-    const user = usersStore.find((u) => u.id === userId);
+    const allUsers = usersStore.getAll ? usersStore.getAll() : [];
+    const user =
+      allUsers.find((u) => String(u.id) === String(userId)) || {
+        id: userId,
+        username: "User",
+        avatar: null,
+      };
 
     voiceUsersByChannel[channelId][userId] = {
       socketId: socket.id,

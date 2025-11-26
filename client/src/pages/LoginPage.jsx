@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const nav = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -13,13 +13,14 @@ export default function LoginPage() {
 
     try {
       const res = await api.post("/auth/login", {
-        email,
+        username,
         password,
       });
 
       // сохраняем токен
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      window.dispatchEvent(new Event("token-changed"));
 
       nav("/friends");
     } catch (err) {
@@ -34,9 +35,9 @@ export default function LoginPage() {
       <div className="w-80 flex flex-col gap-3">
         <input
           className="p-2 bg-[#222] border border-[#330000] rounded"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Никнейм"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
         />
 
         <input

@@ -29,6 +29,7 @@ async function createUser({ username, password }) {
     id,
     username,
     passwordHash,
+    status: "online",
   };
 
   users.push(user);

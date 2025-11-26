@@ -1,28 +1,33 @@
 import { useState } from "react";
-import axios from "axios";
+import { useParams } from "react-router-dom";
+import { api } from "../../api/http";
 
-export default function CreateInviteModal({ isOpen, onClose }) {
+export default function CreateInviteModal({
+  isOpen,
+  onClose,
+  serverId: serverIdProp,
+}) {
   const [expiresIn, setExpiresIn] = useState(7);
-  const [maxUses, setMaxUses] = useState(0); // 0 = бесконечно
+  const [maxUses, setMaxUses] = useState(0);
   const [inviteLink, setInviteLink] = useState(null);
 
-  const token = localStorage.getItem("token");
-  const serverId = window.location.pathname.split("/")[2];
+  const params = useParams();
+  const serverId = serverIdProp || params.serverId;
 
-  if (!isOpen) return null;
+  if (!isOpen || !serverId) return null;
 
   async function createInvite() {
-    const res = await axios.post(
-      "http://localhost:3001/invites/create",
-      {
+    try {
+      const res = await api.post("/invites/create", {
         serverId,
         expiresIn,
         maxUses,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      });
 
-    setInviteLink(res.data.link);
+      setInviteLink(res.data.link);
+    } catch (err) {
+      console.error("Не удалось создать инвайт:", err);
+    }
   }
 
   return (

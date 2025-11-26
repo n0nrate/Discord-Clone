@@ -1,5 +1,6 @@
 const { contextBridge } = require("electron");
 
-contextBridge.exposeInMainWorld("electronAPI", {
-  ping: () => "pong"
+// Сейчас ничего не пробрасываем, но файл нужен, чтобы не падало
+contextBridge.exposeInMainWorld("desktop", {
+  // сюда потом можно вытащить всякие функции из main-процесса
 });

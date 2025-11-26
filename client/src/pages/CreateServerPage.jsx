@@ -1,17 +1,11 @@
 import { useState } from "react";
-import axios from "axios";
+import { api } from "../api/http";
 
 export default function CreateServerPage() {
   const [name, setName] = useState("");
 
-  const token = localStorage.getItem("token");
-
   async function create() {
-    await axios.post(
-      "http://localhost:3001/servers/create",
-      { name },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await api.post("/servers", { name });
     window.location.href = "/friends";
   }
 
