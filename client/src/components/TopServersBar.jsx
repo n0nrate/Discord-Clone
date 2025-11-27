@@ -17,6 +17,7 @@ export default function TopServersBar() {
 
   const [servers, setServers] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
 
   // подгружаем список серверов
   useEffect(() => {
@@ -53,9 +54,16 @@ export default function TopServersBar() {
     nav(`/server/${server.id}`);
   }
 
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.dispatchEvent(new Event("token-changed"));
+    nav("/login");
+  }
+
   return (
     <>
-      <div className="h-16 bg-black border-b border-[#2a0000] flex items-center px-4 gap-4">
+      <div className="h-full w-full bg-black border-b border-[#2a0000] flex items-center gap-3 px-4">
         {[HOME, ...servers].map((s) => (
           <button
             key={s.id}
@@ -75,11 +83,10 @@ export default function TopServersBar() {
           </button>
         ))}
 
-        {/* одна нормальная кнопка создания сервера */}
         <button
           onClick={() => setCreateOpen(true)}
           className="
-            w-10 h-10 flex items-center justify-center rounded-full
+            w-12 h-12 flex items-center justify-center rounded-full
             border-2 border-dashed border-[#ff0000]
             text-xl text-[#ff0000]
             hover:bg-[#ff0000] hover:text-black transition
@@ -88,9 +95,23 @@ export default function TopServersBar() {
         >
           +
         </button>
+
+        <button
+          onClick={() => setShowLogout((v) => !v)}
+          className="ml-auto px-3 py-2 text-sm rounded bg-[#1f1f1f] text-gray-200 hover:bg-red-700"
+        >
+          Аккаунт
+        </button>
+        {showLogout && (
+          <button
+            onClick={logout}
+            className="px-3 py-2 text-sm rounded bg-red-700 text-white hover:bg-red-600"
+          >
+            Выйти
+          </button>
+        )}
       </div>
 
-      {/* модалка создания сервера */}
       <CreateServerModal
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}

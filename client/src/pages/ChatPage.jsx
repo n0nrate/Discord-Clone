@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { api } from "../api/http";
 import { createSocket } from "../api/socket";
 import ServerSidebar from "../components/ServerSidebar";
+import ServerMembers from "../components/ServerMembers";
 
 export default function ChatPage() {
   const { serverId, channelId } = useParams();
@@ -102,10 +103,10 @@ export default function ChatPage() {
   }, [messages]);
 
   return (
-    <div className="flex h-full bg-[#0f0f0f] text-white">
+    <div className="flex h-full w-full bg-[#0f0f0f] text-white">
       <ServerSidebar />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Заголовок канала */}
         <div className="h-14 border-b border-[#1f1f1f] flex items-center px-4 gap-3">
           <span className="text-xl text-red-400">
@@ -173,6 +174,7 @@ export default function ChatPage() {
           </button>
         </div>
       </div>
+      <ServerMembers />
     </div>
   );
 }

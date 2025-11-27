@@ -13,5 +13,11 @@
     "id": "1764184474919",
     "username": "123",
     "passwordHash": "$2b$10$qbjk/xxvGnq7u08VbmOmOe.Sc3Zyzx85AWH84sUzRt.uADwRQAf/W"
+  },
+  {
+    "id": "1764260124277",
+    "username": "321",
+    "passwordHash": "$2b$10$Qq1iU68htPldkiwF7OslAe0HnZS1bAYIdIzK81QhV7B2s6uFNsBDq",
+    "status": "online"
   }
 ]

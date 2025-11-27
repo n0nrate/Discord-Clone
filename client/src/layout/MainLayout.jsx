@@ -1,16 +1,19 @@
 import { Outlet } from "react-router-dom";
 import TopServersBar from "../components/TopServersBar";
+import "./MainLayout.css";
 
 export default function MainLayout() {
   return (
-    <div className="h-screen w-screen bg-[#050505] text-[#e5e5e5] flex flex-col overflow-hidden">
-      {/* верхняя панель серверов */}
-      <TopServersBar />
+    <div className="app-shell">
+      {/* верхнее горизонтальное меню серверов, фиксированная высота */}
+      <header className="top-bar">
+        <TopServersBar />
+      </header>
 
-      {/* всё остальное под серверами */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* содержимое под топ-баром: слева каналы, центр чат, справа участники */}
+      <main className="content-row">
         <Outlet />
-      </div>
+      </main>
     </div>
   );
 }

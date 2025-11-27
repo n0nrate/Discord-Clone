@@ -23,10 +23,43 @@ function writeJSON(p, data) {
   fs.writeFileSync(p, JSON.stringify(data, null, 2), "utf8");
 }
 
-// GET /servers — список серверов (пока без фильтра по пользователю)
-router.get("/", (req, res) => {
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = "SUPER_SECRET_KEY_CHANGE_ME";
+
+function auth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header) return res.status(401).json({ error: "Нет токена" });
+  const parts = header.split(" ");
+  if (parts.length !== 2) return res.status(401).json({ error: "Неверный токен" });
+  try {
+    req.user = jwt.verify(parts[1], JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ error: "Неверный токен" });
+  }
+}
+
+// GET /servers — список серверов пользователя
+router.get("/", auth, (req, res) => {
   const servers = readJSON(serversPath);
-  res.json(servers);
+  const my = servers.filter(
+    (s) =>
+      String(s.ownerId) === String(req.user.id) ||
+      (Array.isArray(s.members) && s.members.includes(req.user.id))
+  );
+  res.json(my);
+});
+
+// GET /servers/:id — детали сервера для своих
+router.get("/:id", auth, (req, res) => {
+  const servers = readJSON(serversPath);
+  const server = servers.find((s) => String(s.id) === String(req.params.id));
+  if (!server) return res.status(404).json({ error: "Сервер не найден" });
+  const allowed =
+    String(server.ownerId) === String(req.user.id) ||
+    (Array.isArray(server.members) && server.members.includes(req.user.id));
+  if (!allowed) return res.status(403).json({ error: "Нет доступа" });
+  res.json(server);
 });
 
 // POST /servers — создать новый сервер
@@ -50,10 +83,11 @@ router.post("/", (req, res) => {
     id: serverId,
     name: name.trim(),
     template: template || "friends",
-    ownerId: ownerId || null,
+    ownerId: ownerId || req.user?.id || null,
     icon: null, // потом добавим
     mainTextChannelId: textChannelId,
     mainVoiceChannelId: voiceChannelId,
+    members: ownerId || req.user?.id ? [ownerId || req.user.id] : [],
     createdAt: new Date().toISOString(),
   };
 
@@ -80,6 +114,26 @@ router.post("/", (req, res) => {
   writeJSON(channelsPath, channels);
 
   res.status(201).json(newServer);
+});
+
+// DELETE /servers/:id — только владелец
+router.delete("/:id", auth, (req, res) => {
+  const servers = readJSON(serversPath);
+  const server = servers.find((s) => String(s.id) === String(req.params.id));
+  if (!server) return res.status(404).json({ error: "Сервер не найден" });
+  if (String(server.ownerId) !== String(req.user.id)) {
+    return res.status(403).json({ error: "Только владелец может удалить" });
+  }
+
+  const filteredServers = servers.filter((s) => String(s.id) !== String(req.params.id));
+  const channels = readJSON(channelsPath).filter(
+    (c) => String(c.serverId) !== String(req.params.id)
+  );
+
+  writeJSON(serversPath, filteredServers);
+  writeJSON(channelsPath, channels);
+
+  res.json({ ok: true });
 });
 
 module.exports = router;

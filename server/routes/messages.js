@@ -1,28 +1,27 @@
 const express = require("express");
 const { v4: uuid } = require("uuid");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 
-// Память вместо базы (пока)
-const messagesByChannel = {
-  // пример для канала 11
-  "11": [
-    {
-      id: uuid(),
-      channelId: "11",
-      author: "Миша",
-      content: "Йоу, как дела?",
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: uuid(),
-      channelId: "11",
-      author: "Бот",
-      content: "Всё огонь, братик 😎",
-      createdAt: new Date().toISOString(),
-    },
-  ],
-};
+const FILE = path.join(__dirname, "..", "data", "channelMessages.json");
+
+function load() {
+  if (!fs.existsSync(FILE)) return {};
+  try {
+    const raw = fs.readFileSync(FILE, "utf8");
+    return raw.trim() ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function save(data) {
+  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
+
+let messagesByChannel = load();
 
 // общая функция создания сообщения (используем и в сокетах, и в REST)
 function createMessage(channelId, { author = "Миша", content }) {
@@ -38,6 +37,7 @@ function createMessage(channelId, { author = "Миша", content }) {
     messagesByChannel[channelId] = [];
   }
   messagesByChannel[channelId].push(msg);
+  save(messagesByChannel);
   return msg;
 }
 

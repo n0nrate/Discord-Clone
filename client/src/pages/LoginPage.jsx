@@ -48,7 +48,12 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        {error && <div className="text-red-400 text-sm">{error}</div>}
+        {error && (
+          <div className="text-red-400 text-sm flex items-center gap-2">
+            <span role="img" aria-label="warning">⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         <button
           onClick={login}

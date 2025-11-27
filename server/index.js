@@ -34,6 +34,7 @@ const io = new Server(server, {
   cors: { origin: "*" },
 });
 
+const { addMessage: addDMMessage } = require("./dmStore");
 // Хранилище участников голосовых каналов
 const voiceUsersByChannel = {};
 
@@ -70,6 +71,12 @@ socket.on("stopTyping", ({ channelId }) => {
   });
 
   socket.on("dm:send", (msg) => {
+    addDMMessage({
+      from: msg.from,
+      to: msg.to,
+      text: msg.text,
+      time: msg.time,
+    });
     io.to(`dm-${msg.to}`).emit("dm:receive", msg);
     io.to(`dm-${msg.from}`).emit("dm:receive", msg);
   });

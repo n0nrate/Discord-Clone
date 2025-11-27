@@ -41,5 +41,75 @@
     "type": "voice",
     "categoryId": "87d15a4e-802c-4fb8-97a8-45f728b7bf62",
     "position": 3
+  },
+  {
+    "id": "266deb1b-dee2-4486-b97d-86a4e61972de",
+    "serverId": "c71ded64-3f00-4352-8e6c-5acfe657d027",
+    "name": "основной",
+    "type": "text",
+    "createdAt": "2025-11-27T13:19:04.868Z"
+  },
+  {
+    "id": "cc178130-4c36-4ba0-b04d-d59366676090",
+    "serverId": "c71ded64-3f00-4352-8e6c-5acfe657d027",
+    "name": "Основной",
+    "type": "voice",
+    "createdAt": "2025-11-27T13:19:04.868Z"
+  },
+  {
+    "id": "b382d9e6-5700-4b7e-84f3-7f5faa0c6b01",
+    "serverId": "2af0b35a-311e-46a0-ba01-36c56b648034",
+    "name": "основной",
+    "type": "text",
+    "createdAt": "2025-11-27T14:50:59.664Z"
+  },
+  {
+    "id": "9f07366b-629f-45ab-bc35-4c8e11bf4c91",
+    "serverId": "2af0b35a-311e-46a0-ba01-36c56b648034",
+    "name": "Основной",
+    "type": "voice",
+    "createdAt": "2025-11-27T14:50:59.664Z"
+  },
+  {
+    "id": "d8e2dea2-a701-41d4-a997-b0b32dac2e6c",
+    "serverId": "79fda110-a0bf-4fdc-8808-edc76ba258da",
+    "name": "основной",
+    "type": "text",
+    "createdAt": "2025-11-27T14:51:06.650Z"
+  },
+  {
+    "id": "2afff47c-2510-43ad-ab14-e048a96628b6",
+    "serverId": "79fda110-a0bf-4fdc-8808-edc76ba258da",
+    "name": "Основной",
+    "type": "voice",
+    "createdAt": "2025-11-27T14:51:06.650Z"
+  },
+  {
+    "id": "1e085fd8-d2c5-49dc-a852-b87e3404f11a",
+    "serverId": "4ad067a1-ea33-44f1-a431-f537ef608a8c",
+    "name": "основной",
+    "type": "text",
+    "createdAt": "2025-11-27T15:50:22.445Z"
+  },
+  {
+    "id": "9d6b6958-3e9e-40ab-a1a9-a8f5e023b267",
+    "serverId": "4ad067a1-ea33-44f1-a431-f537ef608a8c",
+    "name": "Основной",
+    "type": "voice",
+    "createdAt": "2025-11-27T15:50:22.445Z"
+  },
+  {
+    "id": "119ff7cb-9ab3-4a15-98c8-ced73a6fd6c0",
+    "serverId": "6f20fe6c-be3c-440e-89a6-c1b52bba9aa2",
+    "name": "основной",
+    "type": "text",
+    "createdAt": "2025-11-27T15:52:35.009Z"
+  },
+  {
+    "id": "6153a6ae-d0f6-40ed-a7aa-8d45af713bb2",
+    "serverId": "6f20fe6c-be3c-440e-89a6-c1b52bba9aa2",
+    "name": "Основной",
+    "type": "voice",
+    "createdAt": "2025-11-27T15:52:35.009Z"
   }
 ]

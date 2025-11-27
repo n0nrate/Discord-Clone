@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SimplePeer from "simple-peer";
 import { createSocket } from "../api/socket";
+import { api } from "../api/http";
+import ServerSidebar from "../components/ServerSidebar";
 
 export default function VoiceCallPage() {
   const { serverId, channelId } = useParams();
@@ -21,6 +23,8 @@ export default function VoiceCallPage() {
   const [muted, setMuted] = useState(false);
   const [deaf, setDeaf] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [channelName, setChannelName] = useState("");
+  const [sharePreviewUrl, setSharePreviewUrl] = useState("");
 
   useEffect(() => {
     if (!me) {
@@ -73,6 +77,16 @@ export default function VoiceCallPage() {
         }
         peer.signal(data);
       });
+    })();
+
+    (async () => {
+      try {
+        const res = await api.get(`/channels/${serverId}`);
+        const found = (res.data || []).find((c) => c.id === channelId);
+        setChannelName(found?.name || "");
+      } catch (e) {
+        console.error("Не удалось загрузить канал:", e);
+      }
     })();
 
     return () => {
@@ -132,13 +146,18 @@ export default function VoiceCallPage() {
     });
 
     peer.on("stream", (remoteStream) => {
-      const audio = document.createElement("audio");
-      audio.srcObject = remoteStream;
-      audio.autoplay = true;
-      audio.muted = deaf;
+      const hasVideo = remoteStream.getVideoTracks().length > 0;
+      const mediaEl = document.createElement(hasVideo ? "video" : "audio");
+      mediaEl.srcObject = remoteStream;
+      mediaEl.autoplay = true;
+      mediaEl.playsInline = true;
+      mediaEl.muted = deaf;
+      mediaEl.className = hasVideo
+        ? "w-full max-w-xs rounded-lg overflow-hidden"
+        : "";
 
       streamsRef.current[otherUserId] = remoteStream;
-      audioContainerRef.current.appendChild(audio);
+      audioContainerRef.current.appendChild(mediaEl);
 
       startVolumeMeter(remoteStream, otherUserId);
     });
@@ -217,6 +236,7 @@ export default function VoiceCallPage() {
       });
       streamsRef.current.share = display;
       setSharing(true);
+      setSharePreviewUrl(URL.createObjectURL(display));
 
       Object.values(peersRef.current).forEach((peer) => {
         display.getTracks().forEach((track) => {
@@ -227,6 +247,7 @@ export default function VoiceCallPage() {
       display.getVideoTracks()[0].addEventListener("ended", () => {
         setSharing(false);
         streamsRef.current.share = null;
+        setSharePreviewUrl("");
       });
     } catch (e) {
       console.error("Screen share error:", e);
@@ -250,70 +271,87 @@ export default function VoiceCallPage() {
   }
 
   return (
-    <div className="h-full bg-[#0e0e0e] text-white p-6 flex flex-col">
-      <h1 className="text-2xl font-bold mb-4 text-red-400">
-        Голосовой канал #{channelId}
-      </h1>
+    <div className="flex h-full bg-[#0e0e0e] text-white">
+      <ServerSidebar />
 
-      {error && <div className="text-red-400 mb-3">{error}</div>}
+      <div className="flex-1 flex flex-col p-4 gap-3">
+        <div className="h-12 border-b border-[#1f1f1f] flex items-center justify-between px-2">
+          <div className="text-xl font-bold text-red-400">
+            {channelName || "Голосовой канал"}
+          </div>
+          {error && <div className="text-red-400 text-sm">{error}</div>}
+        </div>
 
-      <div className="grid grid-cols-3 gap-4 flex-1">
-        {users.map((u) => {
-          const speaking = (volume[u.id] || 0) > 25;
+        <div className="flex-1 grid grid-cols-3 gap-4 overflow-y-auto pr-2">
+          {users.map((u) => {
+            const speaking = (volume[u.id] || 0) > 25;
+            return (
+              <div
+                key={u.id}
+                className={`
+                  flex flex-col items-center justify-center p-4 rounded-xl
+                  bg-[#181818] border min-h-[180px]
+                  ${speaking ? "border-red-500 shadow-[0_0_15px_#ff0000]" : "border-[#333]"}
+                `}
+              >
+                <div className="w-20 h-20 rounded-full bg-[#222] overflow-hidden mb-2 flex items-center justify-center">
+                  {u.avatar ? (
+                    <img src={u.avatar} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl">🎤</span>
+                  )}
+                </div>
 
-          return (
-            <div
-              key={u.id}
-              className={`
-                flex flex-col items-center justify-center p-4 rounded-xl
-                bg-[#181818] border
-                ${speaking ? "border-red-500 shadow-[0_0_15px_#ff0000]" : "border-[#333]"}
-              `}
-            >
-              <div className="w-20 h-20 rounded-full bg-[#222] overflow-hidden mb-2 flex items-center justify-center">
-                {u.avatar ? (
-                  <img src={u.avatar} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-3xl">🎤</span>
-                )}
+                <div className="text-sm">{u.username}</div>
+                {u.muted && <div className="text-xs text-red-400">Muted</div>}
+                {u.deaf && <div className="text-xs text-red-400">Deafened</div>}
               </div>
+            );
+          })}
+        </div>
 
-              <div className="text-sm">{u.username}</div>
-              {u.muted && <div className="text-xs text-red-400">Muted</div>}
-              {u.deaf && <div className="text-xs text-red-400">Deafened</div>}
-            </div>
-          );
-        })}
+        {sharing && sharePreviewUrl && (
+          <div className="bg-[#161616] border border-red-700 rounded-lg p-2 max-w-sm">
+            <div className="text-sm text-gray-300 mb-2">Ты шаришь экран</div>
+            <video
+              src={sharePreviewUrl}
+              autoPlay
+              muted
+              playsInline
+              className="w-full rounded-md"
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={toggleMute}
+            className={`px-4 py-2 rounded ${muted ? "bg-gray-700" : "bg-red-700"}`}
+          >
+            {muted ? "Unmute" : "Mute"}
+          </button>
+          <button
+            onClick={toggleDeaf}
+            className={`px-4 py-2 rounded ${deaf ? "bg-gray-700" : "bg-red-700"}`}
+          >
+            {deaf ? "Undeafen" : "Deafen"}
+          </button>
+          <button
+            onClick={toggleScreenShare}
+            className={`px-4 py-2 rounded ${sharing ? "bg-gray-700" : "bg-red-700"}`}
+          >
+            {sharing ? "Stop Share" : "Share Screen"}
+          </button>
+          <button
+            onClick={leave}
+            className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
+          >
+            Leave
+          </button>
+        </div>
+
+        <div ref={audioContainerRef} className="hidden" />
       </div>
-
-      <div className="mt-4 flex items-center gap-3">
-        <button
-          onClick={toggleMute}
-          className={`px-4 py-2 rounded ${muted ? "bg-gray-700" : "bg-red-700"}`}
-        >
-          {muted ? "Unmute" : "Mute"}
-        </button>
-        <button
-          onClick={toggleDeaf}
-          className={`px-4 py-2 rounded ${deaf ? "bg-gray-700" : "bg-red-700"}`}
-        >
-          {deaf ? "Undeafen" : "Deafen"}
-        </button>
-        <button
-          onClick={toggleScreenShare}
-          className={`px-4 py-2 rounded ${sharing ? "bg-gray-700" : "bg-red-700"}`}
-        >
-          {sharing ? "Stop Share" : "Share Screen"}
-        </button>
-        <button
-          onClick={leave}
-          className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-500"
-        >
-          Leave
-        </button>
-      </div>
-
-      <div ref={audioContainerRef}></div>
     </div>
   );
 }

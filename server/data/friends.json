@@ -6,6 +6,13 @@
       "toId": "1764184474919",
       "status": "accepted",
       "createdAt": "2025-11-26T19:37:22.198Z"
+    },
+    {
+      "id": "1eddd5e3-0715-43ee-ad33-c7db30a22714",
+      "fromId": "1764260124277",
+      "toId": "1764184474919",
+      "status": "pending",
+      "createdAt": "2025-11-27T16:15:31.548Z"
     }
   ],
   "friends": [

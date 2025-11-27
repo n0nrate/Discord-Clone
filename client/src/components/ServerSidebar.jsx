@@ -18,6 +18,7 @@ export default function ServerSidebar() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [defaultCategory, setDefaultCategory] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -141,26 +142,54 @@ export default function ServerSidebar() {
 
   return (
     <>
-      <div className="w-72 bg-[#111] border-r border-red-900 flex flex-col select-none">
+      <div className="w-[250px] bg-[#111] border-r border-red-900 flex flex-col select-none flex-shrink-0">
 
         {/* Заголовок сервера */}
         <div className="p-3 text-red-400 font-bold border-b border-red-900 text-lg flex items-center justify-between">
           <span>{serverName}</span>
-          <div className="flex gap-2 text-sm">
+          <div className="relative">
             <button
-              className="px-2 py-1 bg-[#1f1f1f] rounded"
-              onClick={() => setCategoryModalOpen(true)}
-              title="Создать категорию"
+              className="px-2 py-1 bg-[#1f1f1f] rounded text-sm"
+              onClick={() => setSettingsOpen((v) => !v)}
+              title="Настройки сервера"
             >
-              Категория +
+              ⚙
             </button>
-            <button
-              className="px-2 py-1 bg-[#1f1f1f] rounded"
-              onClick={() => setInviteModalOpen(true)}
-              title="Пригласить"
-            >
-              Инвайт
-            </button>
+            {settingsOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-[#1a1a1a] border border-[#2a0000] rounded shadow-lg z-20">
+                <button
+                  className="w-full text-left px-3 py-2 hover:bg-[#2a2a2a] text-sm"
+                  onClick={() => {
+                    setInviteModalOpen(true);
+                    setSettingsOpen(false);
+                  }}
+                >
+                  Пригласить (инвайт)
+                </button>
+                <button
+                  className="w-full text-left px-3 py-2 hover:bg-[#2a2a2a] text-sm"
+                  onClick={() => {
+                    setCategoryModalOpen(true);
+                    setSettingsOpen(false);
+                  }}
+                >
+                  Создать категорию
+                </button>
+                <button
+                  className="w-full text-left px-3 py-2 hover:bg-[#442222] text-sm text-red-400"
+                  onClick={() => {
+                    setSettingsOpen(false);
+                    if (window.confirm("Удалить сервер?")) {
+                      api.delete(`/servers/${serverId}`).then(() => {
+                        nav("/friends");
+                      });
+                    }
+                  }}
+                >
+                  Удалить сервер
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
