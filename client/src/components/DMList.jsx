@@ -40,6 +40,7 @@ export default function DMList({ friends: friendsProp }) {
             <img
               src={u.avatar || "/default.png"}
               className="w-10 h-10 rounded-full"
+              alt={u.username || u.name}
             />
             <div
               className={`

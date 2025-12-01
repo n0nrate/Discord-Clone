@@ -60,4 +60,32 @@ router.post("/", (req, res) => {
   res.status(201).json(category);
 });
 
+// PATCH /categories/:id — обновить имя/позицию
+router.patch("/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, position } = req.body;
+
+  const categories = loadCategories();
+  const idx = categories.findIndex((c) => String(c.id) === String(id));
+  if (idx === -1) return res.status(404).json({ error: "Категория не найдена" });
+
+  if (name) categories[idx].name = name;
+  if (typeof position === "number") categories[idx].position = position;
+
+  saveCategories(categories);
+  res.json(categories[idx]);
+});
+
+// DELETE /categories/:id — удалить категорию
+router.delete("/:id", (req, res) => {
+  const { id } = req.params;
+  const categories = loadCategories();
+  const exists = categories.some((c) => String(c.id) === String(id));
+  if (!exists) return res.status(404).json({ error: "Категория не найдена" });
+
+  const filtered = categories.filter((c) => String(c.id) !== String(id));
+  saveCategories(filtered);
+  res.json({ ok: true });
+});
+
 module.exports = router;

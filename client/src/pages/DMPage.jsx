@@ -10,10 +10,19 @@ export default function DMPage() {
   const me = JSON.parse(localStorage.getItem("user") || "null");
 
   const socketRef = useRef(null);
+  const bottomRef = useRef(null);
 
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [userCard, setUserCard] = useState(null);
+  const [inviteInfo, setInviteInfo] = useState({});
+
+  function extractInviteCode(text = "") {
+    const match =
+      text.match(/discord\.gg\/([A-Za-z0-9]+)/i) ||
+      text.match(/invite\/([A-Za-z0-9]+)/i);
+    return match ? match[1] : null;
+  }
 
   async function load() {
     try {
@@ -37,7 +46,6 @@ export default function DMPage() {
     };
 
     socketRef.current.emit("dm:send", msg);
-    setMessages((prev) => [...prev, msg]);
     setText("");
   }
 
@@ -71,20 +79,94 @@ export default function DMPage() {
     };
   }, [userId, me.id]);
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    messages.forEach((m) => {
+      const code = extractInviteCode(m.text);
+      if (code && !inviteInfo[code]) {
+        api
+          .get(`/invites/${code}`)
+          .then((res) => {
+            setInviteInfo((prev) => ({ ...prev, [code]: res.data }));
+          })
+          .catch(() => {});
+      }
+    });
+  }, [messages]);
+
+  function openExternal(url) {
+    try {
+      window.open(url, "_blank");
+    } catch (e) {
+      console.error("cannot open link", e);
+    }
+  }
+
+  function renderContent(content = "") {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return content.split(urlRegex).map((part, idx) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={idx}
+            href={part}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => {
+              e.preventDefault();
+              openExternal(part);
+            }}
+            className="text-blue-400 underline"
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={idx}>{part}</span>;
+    });
+  }
+
+  function renderInvitePreview(content = "") {
+    const code = extractInviteCode(content);
+    if (!code || !inviteInfo[code]) return null;
+    const info = inviteInfo[code];
+    return (
+      <div className="mt-2 bg-[#161616] border border-red-800 rounded-lg p-3 w-64">
+        <div className="font-semibold text-white">{info.serverName}</div>
+        <div className="text-sm text-gray-400">
+          Участники: {info.membersCount || 0}
+        </div>
+        <button
+          className="mt-2 w-full bg-green-600 hover:bg-green-500 rounded px-3 py-1 text-white text-sm"
+          onClick={() => {
+            api.post(`/invites/${code}/join`).then((res) => {
+              nav(`/server/${res.data.serverId}`);
+            });
+          }}
+        >
+          Перейти на сервер
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-full bg-[#0f0f0f] text-white">
+    <div className="flex h-full bg-[#0f0f0f] text-white min-h-0">
       <DMList />
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="h-14 border-b border-[#1f1f1f] flex items-center px-4 gap-3">
           <div className="font-semibold text-lg">
             {userCard?.username || "Личные сообщения"}
           </div>
         </div>
 
-        <div className="flex flex-1">
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex flex-1 min-h-0">
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
               {messages.map((m) => (
                 <div key={m.time} className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#222] rounded-full flex items-center justify-center text-xl">
@@ -94,10 +176,12 @@ export default function DMPage() {
                     <div className="text-sm text-gray-400">
                       {m.from === me.id ? me.username : userCard?.username || "Он"}
                     </div>
-                    <div className="text-gray-200">{m.text}</div>
+                    <div className="text-gray-200">{renderContent(m.text)}</div>
+                    {renderInvitePreview(m.text)}
                   </div>
                 </div>
               ))}
+              <div ref={bottomRef} />
             </div>
 
             <div className="p-4 border-t border-[#1f1f1f] flex gap-3">
@@ -124,6 +208,7 @@ export default function DMPage() {
                   <img
                     src={userCard.avatar || "/default.png"}
                     className="w-12 h-12 rounded-full"
+                    alt={userCard.username}
                   />
                   <div>
                     <div className="font-semibold">{userCard.username}</div>

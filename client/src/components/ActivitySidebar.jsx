@@ -18,11 +18,12 @@ export default function ActivitySidebar({ friends }) {
               <img
                 src={f.avatar}
                 className="w-10 h-10 rounded-full mr-3"
+                alt={f.username}
               />
               <div>
                 <div className="font-bold text-white">{f.username}</div>
                 <div className="text-green-400 text-sm">
-                  {f.activity.type === "voice" && "В голосовом канале"}
+                  {f.activity.type === "voice" && "В голосовом канале"}ё  
                   {f.activity.type === "game" && `Играет в ${f.activity.name}`}
                   {f.activity.type === "app" && `${f.activity.name}`}
                 </div>

@@ -36,6 +36,7 @@ export default function ServerMembers() {
             <img
               src={m.avatar || "/default.png"}
               className="w-10 h-10 rounded-full"
+              alt={m.username}
             />
             <div>
               <div className="font-semibold">{m.username}</div>

@@ -20,8 +20,6 @@ export default function ServerSidebar() {
   const [defaultCategory, setDefaultCategory] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const token = localStorage.getItem("token");
-
   async function load() {
     const [channelsRes, categoriesRes, serversRes] = await Promise.all([
       api.get(`/channels/${serverId}`),

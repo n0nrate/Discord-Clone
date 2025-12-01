@@ -34,5 +34,14 @@
     "expires": 1764856345504,
     "maxUses": 0,
     "uses": 6
+  },
+  "f96794fa": {
+    "code": "f96794fa",
+    "serverId": "d9496a12-195a-43e5-bdf6-d668c8cf0525",
+    "creatorId": "1764180735361",
+    "createdAt": 1764603674458,
+    "expires": 1765208474458,
+    "maxUses": 0,
+    "uses": 1
   }
 }

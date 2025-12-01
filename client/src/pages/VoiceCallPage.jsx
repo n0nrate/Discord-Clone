@@ -25,6 +25,9 @@ export default function VoiceCallPage() {
   const [sharing, setSharing] = useState(false);
   const [channelName, setChannelName] = useState("");
   const [sharePreviewUrl, setSharePreviewUrl] = useState("");
+  const [micGain, setMicGain] = useState(1);
+  const gainRef = useRef(null);
+  const audioCtxRef = useRef(null);
 
   useEffect(() => {
     if (!me) {
@@ -113,16 +116,25 @@ export default function VoiceCallPage() {
   async function startLocalAudio() {
     if (streamsRef.current.local) return streamsRef.current.local;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const rawStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
         },
       });
-      streamsRef.current.local = stream;
-      startVolumeMeter(stream, me.id);
-      return stream;
+      // применяем gain через WebAudio
+      const ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+      const source = ctx.createMediaStreamSource(rawStream);
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = micGain;
+      gainRef.current = gainNode;
+      const dest = ctx.createMediaStreamDestination();
+      source.connect(gainNode).connect(dest);
+      streamsRef.current.local = dest.stream;
+      startVolumeMeter(dest.stream, me.id);
+      return dest.stream;
     } catch (e) {
       setError("Нет доступа к микрофону. Разреши доступ и попробуй снова.");
       throw e;
@@ -296,7 +308,7 @@ export default function VoiceCallPage() {
               >
                 <div className="w-20 h-20 rounded-full bg-[#222] overflow-hidden mb-2 flex items-center justify-center">
                   {u.avatar ? (
-                    <img src={u.avatar} className="w-full h-full object-cover" />
+                    <img src={u.avatar} className="w-full h-full object-cover" alt={u.username} />
                   ) : (
                     <span className="text-3xl">🎤</span>
                   )}
@@ -348,6 +360,23 @@ export default function VoiceCallPage() {
           >
             Leave
           </button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-300">Mic</span>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              value={micGain}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setMicGain(val);
+                if (gainRef.current) {
+                  gainRef.current.gain.value = val;
+                }
+              }}
+            />
+          </div>
         </div>
 
         <div ref={audioContainerRef} className="hidden" />

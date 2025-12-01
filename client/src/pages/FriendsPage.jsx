@@ -9,8 +9,6 @@ export default function FriendsPage() {
   const [requests, setRequests] = useState([]);
   const [friendIdentifier, setFriendIdentifier] = useState("");
 
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
     loadFriends();
   }, [tab]);

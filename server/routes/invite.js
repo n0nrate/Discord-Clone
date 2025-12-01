@@ -98,6 +98,32 @@ router.post("/create", auth, (req, res) => {
   });
 });
 
+// GET /invites/:code — инфо об инвайте (для предпросмотра)
+router.get("/:code", auth, (req, res) => {
+  const { code } = req.params;
+  const invite = invites[code];
+  if (!invite) {
+    return res.status(404).json({ error: "Код недействителен" });
+  }
+
+  const servers = loadServers();
+  const server = servers.find((s) => String(s.id) === String(invite.serverId));
+  if (!server) {
+    return res.status(404).json({ error: "Сервер не найден" });
+  }
+
+  res.json({
+    code,
+    serverId: server.id,
+    serverName: server.name,
+    membersCount: Array.isArray(server.members) ? server.members.length : 0,
+    createdAt: invite.createdAt,
+    expires: invite.expires,
+    maxUses: invite.maxUses,
+    uses: invite.uses,
+  });
+});
+
 // POST /invites/:code/join
 // Подключить пользователя к серверу по инвайт‑коду
 router.post("/:code/join", auth, (req, res) => {
