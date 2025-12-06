@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import SimplePeer from "simple-peer";
-import { createSocket } from "../api/socket";
+import { socketManager } from "../api/socketManager";
 import { api } from "../api/http";
 import ServerSidebar from "../components/ServerSidebar";
 
@@ -52,7 +52,7 @@ export default function VoiceCallPage() {
 
       if (!mounted) return;
 
-      socket.current = createSocket({ autoConnect: true });
+      socket.current = socketManager.socket;
       socket.current.emit("voice:join", { channelId, userId: me.id });
 
       socket.current.on("voice:users", ({ users }) => {
@@ -82,6 +82,11 @@ export default function VoiceCallPage() {
       });
     })();
 
+    const handleReconnect = () => {
+      socketManager.socket.emit("voice:join", { channelId, userId: me.id });
+    };
+    socketManager.onReconnect(handleReconnect);
+
     (async () => {
       try {
         const res = await api.get(`/channels/${serverId}`);
@@ -98,6 +103,9 @@ export default function VoiceCallPage() {
         socket.current.emit("voice:leave", { channelId, userId: me.id });
         socket.current.disconnect();
       }
+      socketManager.onConnectCbs = socketManager.onConnectCbs.filter(
+        (cb) => cb !== handleReconnect
+      );
       Object.values(peersRef.current).forEach((p) => p.destroy());
       peersRef.current = {};
 

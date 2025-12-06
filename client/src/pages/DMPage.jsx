@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/http";
-import { createSocket } from "../api/socket";
+import { socketManager } from "../api/socketManager";
 import DMList from "../components/DMList";
 
 export default function DMPage() {
@@ -59,23 +59,35 @@ export default function DMPage() {
 
   useEffect(() => {
     if (!me) return;
-    socketRef.current = createSocket({ autoConnect: true });
-    socketRef.current.emit("join-dm", me.id);
+    socketRef.current = socketManager.socket;
+    socketManager.joinRoom(`dm-${me.id}`);
 
-    socketRef.current.on("dm:receive", (msg) => {
+    const onDm = (msg) => {
       if (
         (msg.from === me.id && msg.to === userId) ||
         (msg.to === me.id && msg.from === userId)
       ) {
         setMessages((prev) => [...prev, msg]);
       }
-    });
+    };
+
+    socketRef.current.on("dm:receive", onDm);
+    socketRef.current.on("dm:created", onDm);
+
+    const reconnectCb = () => {
+      socketManager.joinRoom(`dm-${me.id}`);
+    };
+    socketManager.onReconnect(reconnectCb);
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.off("dm:receive");
-        socketRef.current.disconnect();
+        socketRef.current.off("dm:receive", onDm);
+        socketRef.current.off("dm:created", onDm);
+        socketManager.leaveRoom(`dm-${me.id}`);
       }
+      socketManager.onConnectCbs = socketManager.onConnectCbs.filter(
+        (cb) => cb !== reconnectCb
+      );
     };
   }, [userId, me.id]);
 

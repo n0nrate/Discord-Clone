@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/http";
-import { createSocket } from "../api/socket";
+import { socketManager } from "../api/socketManager";
 import ServerSidebar from "../components/ServerSidebar";
 import ServerMembers from "../components/ServerMembers";
 
@@ -69,9 +69,8 @@ export default function ChatPage() {
       }
     }
 
-    socketRef.current = createSocket({ autoConnect: true });
-
-    socketRef.current.emit("join-channel", channelId);
+    socketRef.current = socketManager.socket;
+    socketManager.joinRoom(channelId);
 
     const onNew = (msg) => setMessages((prev) => [...prev, msg]);
     socketRef.current.on("message:new", onNew);
@@ -89,7 +88,7 @@ export default function ChatPage() {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.emit("leave-channel", channelId);
+        socketManager.leaveRoom(channelId);
         socketRef.current.off("message:new", onNew);
         socketRef.current.off("messageCreated", onNew);
         socketRef.current.off("typing", onTypingStart);
